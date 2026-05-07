@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOB — Central de Performance Comercial</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Poppins:wght@300;400;500;600&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+  :root {
+    --red:       #E8392A;
+    --orange:    #F28C28;
+    --blue:      #1F3A8C;
+    --blue-light:#2A4FA0;
+    --white:     #FFFFFF;
+    --bg:        #0D1525;
+    --bg2:       #131E33;
+    --bg3:       #1A2745;
+    --card:      #1C2C48;
+    --card2:     #213255;
+    --border:    rgba(255,255,255,0.07);
+    --text:      #E8EEF8;
+    --muted:     #7A8BA8;
+    --green:     #22C55E;
+    --yellow:    #F59E0B;
+    --sidebar-w: 240px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0; top: 0;
+    z-index: 100;
+    transition: transform .3s ease;
+  }
+
+  .sidebar-logo {
+    padding: 28px 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* GOB SVG Logo */
+  .gob-logo { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+  .gob-letters {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    line-height: 1;
+  }
+  .gob-g { font-family:'Montserrat',sans-serif; font-weight:900; font-size:36px; color:#E8392A; letter-spacing:-1px; }
+  .gob-o { font-family:'Montserrat',sans-serif; font-weight:900; font-size:36px;
+    background: linear-gradient(135deg,#E8392A,#F28C28);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:-1px; }
+  .gob-b { font-family:'Montserrat',sans-serif; font-weight:900; font-size:36px; color:#F28C28; letter-spacing:-1px; }
+  .gob-subtitle { font-family:'Nunito Sans',sans-serif; font-weight:700; font-size:8px; letter-spacing:3px; color:#1F3A8C; color:var(--blue-light); margin-top:2px; text-transform:uppercase; }
+
+  .sidebar-nav { flex:1; padding: 16px 0; overflow-y:auto; }
+
+  .nav-section-label {
+    font-family:'Nunito Sans',sans-serif;
+    font-size:9px; font-weight:700; letter-spacing:2px;
+    text-transform:uppercase; color:var(--muted);
+    padding: 16px 20px 6px;
+  }
+
+  .nav-item {
+    display:flex; align-items:center; gap:12px;
+    padding: 10px 20px; cursor:pointer;
+    border-left: 3px solid transparent;
+    transition: all .2s;
+    font-size:13px; font-weight:500; color:var(--muted);
+    text-decoration:none;
+  }
+  .nav-item:hover { background:rgba(255,255,255,0.04); color:var(--text); border-left-color:var(--orange); }
+  .nav-item.active { background:rgba(242,140,40,0.08); color:var(--orange); border-left-color:var(--orange); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    font-size:11px; color:var(--muted);
+  }
+  .status-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); margin-right:6px; animation: pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top:0; z-index:90;
+  }
+
+  .topbar-left h1 {
+    font-family:'Montserrat',sans-serif;
+    font-size:18px; font-weight:800; color:var(--white);
+    letter-spacing:-.3px;
+  }
+  .topbar-left p {
+    font-size:11px; color:var(--muted); margin-top:1px;
+  }
+  .period-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    background: rgba(31,58,140,0.25);
+    border: 1px solid rgba(31,58,140,0.5);
+    color: #7EAAFF; padding: 3px 10px; border-radius:20px;
+    font-size:11px; font-weight:600; margin-left:10px;
+  }
+
+  .topbar-right { display:flex; gap:10px; align-items:center; }
+
+  .btn {
+    display:inline-flex; align-items:center; gap:7px;
+    padding: 8px 16px; border-radius:8px; font-size:12px; font-weight:600;
+    cursor:pointer; border:none; font-family:'Poppins',sans-serif;
+    transition: all .2s; text-decoration:none;
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-outline:hover { border-color:var(--orange); color:var(--orange); }
+  .btn-primary {
+    background: linear-gradient(135deg,var(--red),var(--orange));
+    color:#fff;
+  }
+  .btn-primary:hover { opacity:.88; transform:translateY(-1px); box-shadow:0 4px 16px rgba(232,57,42,.3); }
+  .btn svg { width:14px; height:14px; }
+
+  .last-update {
+    font-size:11px; color:var(--muted);
+    background: var(--bg3); padding:5px 12px; border-radius:6px;
+  }
+
+  /* ── CONTENT ── */
+  .content { padding: 28px 32px; flex:1; }
+
+  .section { margin-bottom: 36px; }
+  .section-title {
+    font-family:'Montserrat',sans-serif;
+    font-size:13px; font-weight:700; letter-spacing:2px;
+    text-transform:uppercase; color:var(--muted);
+    display:flex; align-items:center; gap:10px; margin-bottom:18px;
+  }
+  .section-title::after {
+    content:''; flex:1; height:1px; background:var(--border);
+  }
+  .section-badge {
+    background: linear-gradient(135deg,var(--red),var(--orange));
+    color:#fff; font-size:9px; padding:2px 8px; border-radius:10px;
+    font-weight:700; letter-spacing:.5px;
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position:relative; overflow:hidden;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .kpi-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg,var(--red),var(--orange));
+    border-radius:14px 14px 0 0;
+  }
+  .kpi-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,.25); }
+
+  .kpi-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+  .kpi-icon {
+    width:38px; height:38px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(242,140,40,0.12);
+  }
+  .kpi-icon svg { width:18px; height:18px; }
+  .kpi-badge {
+    font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px;
+    display:inline-flex; align-items:center; gap:3px;
+  }
+  .kpi-badge.up { background:rgba(34,197,94,.12); color:#22C55E; }
+  .kpi-badge.down { background:rgba(232,57,42,.12); color:#E8392A; }
+  .kpi-badge.neutral { background:rgba(245,158,11,.12); color:#F59E0B; }
+
+  .kpi-name { font-size:11px; color:var(--muted); font-weight:500; margin-bottom:4px; }
+  .kpi-value {
+    font-family:'Montserrat',sans-serif;
+    font-size:28px; font-weight:800; color:var(--white);
+    line-height:1;
+  }
+  .kpi-sub { font-size:10px; color:var(--muted); margin-top:4px; }
+  .sparkline { margin-top:12px; opacity:.8; }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display:grid; grid-template-columns:2fr 1fr; gap:16px;
+  }
+  .chart-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:22px;
+  }
+  .chart-card.full { grid-column:1/-1; }
+  .chart-title {
+    font-family:'Montserrat',sans-serif;
+    font-size:13px; font-weight:700; color:var(--white); margin-bottom:4px;
+  }
+  .chart-sub { font-size:11px; color:var(--muted); margin-bottom:18px; }
+
+  /* ── TABLE ── */
+  .table-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  }
+  .table-toolbar {
+    display:flex; align-items:center; gap:12px;
+    padding:16px 20px; border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .search-box {
+    display:flex; align-items:center; gap:8px;
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:8px; padding:7px 12px; flex:1; min-width:200px;
+  }
+  .search-box input {
+    background:none; border:none; outline:none; color:var(--text);
+    font-family:'Poppins',sans-serif; font-size:12px; width:100%;
+  }
+  .search-box input::placeholder { color:var(--muted); }
+  .search-box svg { color:var(--muted); width:14px; height:14px; flex-shrink:0; }
+
+  .filter-select {
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:8px; padding:7px 12px; color:var(--text);
+    font-family:'Poppins',sans-serif; font-size:12px; outline:none; cursor:pointer;
+  }
+
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:var(--bg3); }
+  th {
+    padding:12px 16px; text-align:left;
+    font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted);
+    cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  th:hover { color:var(--orange); }
+  td {
+    padding:13px 16px; font-size:12px; color:var(--text);
+    border-bottom:1px solid var(--border);
+  }
+  tbody tr { transition: background .15s; }
+  tbody tr:hover { background:rgba(255,255,255,.03); }
+  tbody tr:last-child td { border-bottom:none; }
+
+  .pill {
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:600;
+  }
+  .pill.good { background:rgba(34,197,94,.12); color:#22C55E; }
+  .pill.warn { background:rgba(245,158,11,.12); color:#F59E0B; }
+  .pill.bad  { background:rgba(232,57,42,.12);  color:#E8392A; }
+  .pill.blue { background:rgba(31,58,140,.25); color:#7EAAFF; }
+
+  .campaign-name { font-weight:600; color:var(--white); font-size:12px; }
+  .campaign-sub { font-size:10px; color:var(--muted); margin-top:1px; }
+
+  /* ── ENGAGEMENT ── */
+  .eng-grid { display:grid; grid-template-columns:repeat(3,1fr) 2fr; gap:16px; }
+  .eng-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px;
+    position:relative; overflow:hidden; transition: transform .25s;
+  }
+  .eng-card:hover { transform:translateY(-2px); }
+  .eng-num {
+    font-family:'Montserrat',sans-serif; font-size:32px; font-weight:800; color:var(--white);
+    margin: 8px 0 4px;
+  }
+  .eng-label { font-size:11px; color:var(--muted); font-weight:500; }
+  .eng-change { font-size:11px; margin-top:6px; font-weight:600; }
+  .eng-change.up { color:var(--green); }
+  .eng-change.down { color:var(--red); }
+
+  /* ── PIPELINE ── */
+  .pipeline-grid { display:grid; grid-template-columns:repeat(4,1fr) 2fr; gap:16px; }
+  .pipe-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px;
+    text-align:center; transition:transform .25s;
+  }
+  .pipe-card:hover { transform:translateY(-2px); }
+  .pipe-num {
+    font-family:'Montserrat',sans-serif; font-size:30px; font-weight:800; color:var(--white);
+    margin:10px 0 4px;
+  }
+  .pipe-label { font-size:11px; color:var(--muted); }
+  .pipe-icon-wrap {
+    width:44px; height:44px; border-radius:12px; margin:0 auto;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .funnel-bar { margin-bottom:12px; }
+  .funnel-label-row { display:flex; justify-content:space-between; margin-bottom:5px; font-size:11px; color:var(--muted); }
+  .funnel-track { height:10px; background:var(--bg3); border-radius:6px; overflow:hidden; }
+  .funnel-fill { height:100%; border-radius:6px; transition:width 1s cubic-bezier(.4,0,.2,1); }
+
+  /* ── INSIGHTS ── */
+  .insights-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .insight-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px;
+    transition:transform .25s;
+  }
+  .insight-card:hover { transform:translateY(-2px); }
+  .insight-icon {
+    width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    margin-bottom:12px;
+  }
+  .insight-title { font-family:'Montserrat',sans-serif; font-size:12px; font-weight:700; color:var(--white); margin-bottom:6px; }
+  .insight-text { font-size:12px; color:var(--muted); line-height:1.6; }
+  .insight-value { font-family:'Montserrat',sans-serif; font-size:22px; font-weight:800; color:var(--white); margin-bottom:2px; }
+  .alert-card {
+    background: rgba(232,57,42,0.06); border:1px solid rgba(232,57,42,0.2);
+    border-radius:14px; padding:16px 20px; display:flex; align-items:center; gap:14px;
+    margin-bottom:10px;
+  }
+  .alert-card.warn { background:rgba(245,158,11,.06); border-color:rgba(245,158,11,.2); }
+  .alert-card.ok { background:rgba(34,197,94,.06); border-color:rgba(34,197,94,.2); }
+  .alert-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .alert-dot.red { background:var(--red); }
+  .alert-dot.yellow { background:var(--yellow); }
+  .alert-dot.green { background:var(--green); }
+  .alert-text { font-size:12px; color:var(--text); line-height:1.5; }
+  .alert-label { font-size:10px; color:var(--muted); margin-top:1px; }
+
+  /* ── STATUS ── */
+  .status-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+  .status-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px;
+    display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
+    transition:transform .25s;
+  }
+  .status-card:hover { transform:translateY(-2px); }
+  .status-indicator {
+    width:14px; height:14px; border-radius:50%;
+    box-shadow:0 0 0 4px rgba(0,0,0,0);
+  }
+  .status-indicator.green { background:var(--green); box-shadow:0 0 0 4px rgba(34,197,94,.2); animation:pulse-dot 2s infinite; }
+  .status-indicator.yellow { background:var(--yellow); box-shadow:0 0 0 4px rgba(245,158,11,.2); }
+  .status-indicator.red { background:var(--red); box-shadow:0 0 0 4px rgba(232,57,42,.2); }
+  .status-label { font-size:12px; color:var(--text); font-weight:500; }
+  .status-sub { font-size:10px; color:var(--muted); }
+  .status-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg2); }
+  ::-webkit-scrollbar-thumb { background:var(--bg3); border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--card2); }
+
+  /* ── DIVIDER ── */
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+
+  /* ── ANIMATION ── */
+  .fade-in {
+    opacity:0; transform:translateY(16px);
+    animation: fadeUp .5s ease forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity:1; transform:translateY(0); }
+  }
+  .fade-in:nth-child(1){animation-delay:.05s}
+  .fade-in:nth-child(2){animation-delay:.1s}
+  .fade-in:nth-child(3){animation-delay:.15s}
+  .fade-in:nth-child(4){animation-delay:.2s}
+  .fade-in:nth-child(5){animation-delay:.25s}
+  .fade-in:nth-child(6){animation-delay:.3s}
+  .fade-in:nth-child(7){animation-delay:.35s}
+  .fade-in:nth-child(8){animation-delay:.4s}
+
+  /* ── GRADIENT ACCENTS ── */
+  .accent-bar {
+    height:2px; border-radius:1px;
+    background:linear-gradient(90deg,var(--red),var(--orange),transparent);
+    margin-bottom:20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="gob-logo">
+      <div class="gob-letters">
+        <span class="gob-g">g</span><span class="gob-o">o</span><span class="gob-b">b</span>
+      </div>
+      <div class="gob-subtitle">Grupo Open Brasil</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Visão</div>
+    <a class="nav-item active" href="#overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Visão Geral
+    </a>
+    <a class="nav-item" href="#campaigns">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Campanhas
+    </a>
+    <div class="nav-section-label">Análise</div>
+    <a class="nav-item" href="#engagement">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Engajamento
+    </a>
+    <a class="nav-item" href="#pipeline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Pipeline
+    </a>
+    <div class="nav-section-label">Inteligência</div>
+    <a class="nav-item" href="#insights">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Insights
+    </a>
+    <a class="nav-item" href="#status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Status
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>
+    RD Station + Pipedrive online
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1>Central de Performance Comercial
+        <span class="period-badge">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Jan – Jun 2025
+        </span>
+      </h1>
+      <p>Dashboard de E-mail Marketing · RD Station + Pipedrive</p>
+    </div>
+    <div class="topbar-right">
+      <div class="last-update">⟳ Atualizado: 06/05/2025 às 09:47</div>
+      <button class="btn btn-outline" onclick="alert('Exportando PDF...')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PDF
+      </button>
+      <button class="btn btn-primary" onclick="alert('Exportando Excel...')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="21"/><line x1="8" y1="13" x2="16" y2="21"/></svg>
+        Excel
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ══ SEÇÃO 1 — VISÃO GERAL ══ -->
+    <section class="section" id="overview">
+      <div class="section-title">
+        <span class="section-badge">01</span>
+        Visão Geral
+      </div>
+      <div class="accent-bar"></div>
+
+      <div class="kpi-grid">
+        <!-- KPI 1 -->
+        <div class="kpi-card fade-in">
+          <div class="kpi-header">
+            <div class="kpi-icon" style="background:rgba(31,58,140,.18)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#7EAAFF" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+            </div>
+            <span class="kpi-badge up">▲ 12,4%</span>
+          </div>
+          <div class="kpi-name">Leads Impactados</div>
+          <div class="kpi-value">47.832</div>
+          <div class="kpi-sub">vs. 42.560 no período anterior</div>
+          <div class="sparkline" id="spark1"></div>
+        </div>
+        <!-- KPI 2 -->
+        <div class="kpi-card fade-in">
+          <div class="kpi-header">
+            <div class="kpi-icon" style="background:rgba(242,140,40,.12)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#F28C28" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <span class="kpi-badge up">▲ 3,1%</span>
+          </div>
+          <div class="kpi-name">Taxa de Abertura</div>
+          <div class="kpi-value">28,4%</div>
+          <div class="kpi-sub">Benchmark mercado: 21,5%</div>
+          <div class="sparkline" id="spark2"></div>
+        </div>
+        <!-- KPI 3 -->
+        <div class="kpi-card fade-in">
+          <div class="kpi-header">
+            <div class="kpi-icon" style="background:rgba(34,197,94,.1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <span class="kpi-badge up">▲ 0,8%</span>
+          </div>
+          <div class="kpi-name">Taxa de Cliques</div>
+          <div class="kpi-value">6,2%</div>
+          <div class="kpi-sub">3.077 cliques únicos</div>
+          <div class="sparkline" id="spark3"></div>
+        </div>
+        <!-- KPI 4 -->
+        <div class="kpi-card fade-in">
+          <div class="kpi-header">
+            <div class="kpi-icon" style="background:rgba(232,57,42,.1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#E8392A" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <span class="kpi-badge up">▲ 1,5%</span>
+          </div>
+          <div class="kpi-name">CTOR</div>
+          <div class="kpi-value">21,8%</div>
+          <div class="kpi-sub">Cliques / Aberturas</div>
+          <div class="sparkline" id="spark4"></div>
+        </div>
+        <!-- KPI 5 -->
+        <div class="kpi-card fade-in">
+          <div class="kpi-header">
+            <div class="kpi-icon" style="background:rgba(242,140,40,.12)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#F28C28" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <span class="kpi-badge up">▲ 0,4%</span>
+          </div>
+          <div class="kpi-name">Conversão</div>
+          <div class="kpi-value">4,7%</div>
+          <div class="kpi-sub">2.249 conversões no período</div>
+          <div class="sparkline" id="spark5"></div>
+        </div>
+        <!-- KPI 6 -->
+        <div class="kpi-card fade-in">
+          <div class="kpi-header">
+            <div class="kpi-icon" style="background:rgba(245,158,11,.1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
+            </div>
+            <span class="kpi-badge down">▼ 0,2%</span>
+          </div>
+          <div class="kpi-name">Descadastros</div>
+          <div class="kpi-value">0,38%</div>
+          <div class="kpi-sub">182 descadastros</div>
+          <div class="sparkline" id="spark6"></div>
+        </div>
+        <!-- KPI 7 -->
+        <div class="kpi-card fade-in">
+          <div class="kpi-header">
+            <div class="kpi-icon" style="background:rgba(232,57,42,.1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#E8392A" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <span class="kpi-badge neutral">= 0,0%</span>
+          </div>
+          <div class="kpi-name">Bounce Rate</div>
+          <div class="kpi-value">1,2%</div>
+          <div class="kpi-sub">574 bounces (soft + hard)</div>
+          <div class="sparkline" id="spark7"></div>
+        </div>
+        <!-- KPI 8 -->
+        <div class="kpi-card fade-in">
+          <div class="kpi-header">
+            <div class="kpi-icon" style="background:rgba(34,197,94,.1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <span class="kpi-badge up">▲ 0,5%</span>
+          </div>
+          <div class="kpi-name">Entregabilidade</div>
+          <div class="kpi-value">98,1%</div>
+          <div class="kpi-sub">Excelente — acima de 97%</div>
+          <div class="sparkline" id="spark8"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SEÇÃO 2 — CAMPANHAS ══ -->
+    <section class="section" id="campaigns">
+      <div class="section-title">
+        <span class="section-badge">02</span>
+        Performance das Campanhas
+      </div>
+      <div class="accent-bar"></div>
+
+      <div class="charts-grid" style="margin-bottom:16px;">
+        <div class="chart-card">
+          <div class="chart-title">Evolução de Abertura & Cliques</div>
+          <div class="chart-sub">Taxas mensais — Jan a Jun 2025</div>
+          <div id="chartTimeline"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Conversão Mensal</div>
+          <div class="chart-sub">% de conversão por mês</div>
+          <div id="chartConversao"></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="Buscar campanha..." onkeyup="filterTable()">
+          </div>
+          <select class="filter-select" onchange="filterTable()">
+            <option value="">Todos os períodos</option>
+            <option value="Jan">Janeiro</option>
+            <option value="Fev">Fevereiro</option>
+            <option value="Mar">Março</option>
+            <option value="Abr">Abril</option>
+            <option value="Mai">Maio</option>
+            <option value="Jun">Junho</option>
+          </select>
+          <select class="filter-select">
+            <option>Todas as campanhas</option>
+            <option>Automação</option>
+            <option>Broadcast</option>
+            <option>Newsletter</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortTable(0)">Campanha ⇅</th>
+                <th onclick="sortTable(1)">Data ⇅</th>
+                <th onclick="sortTable(2)">Impactados ⇅</th>
+                <th onclick="sortTable(3)">Abertura ⇅</th>
+                <th onclick="sortTable(4)">Cliques ⇅</th>
+                <th onclick="sortTable(5)">Conversão ⇅</th>
+                <th onclick="sortTable(6)">Descadastros ⇅</th>
+                <th onclick="sortTable(7)">Bounce ⇅</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="campaignTable">
+              <tr>
+                <td><div class="campaign-name">Boas-vindas Outubro</div><div class="campaign-sub">Automação · Newsletter</div></td>
+                <td>Jan 2025</td><td>8.420</td>
+                <td><span class="pill good">34,2%</span></td>
+                <td><span class="pill good">8,1%</span></td>
+                <td><span class="pill good">6,3%</span></td>
+                <td><span class="pill good">0,2%</span></td>
+                <td><span class="pill good">0,9%</span></td>
+                <td><span class="pill blue">Concluída</span></td>
+              </tr>
+              <tr>
+                <td><div class="campaign-name">Promoção Verão</div><div class="campaign-sub">Broadcast · Oferta</div></td>
+                <td>Jan 2025</td><td>12.350</td>
+                <td><span class="pill good">31,8%</span></td>
+                <td><span class="pill good">7,4%</span></td>
+                <td><span class="pill good">5,9%</span></td>
+                <td><span class="pill warn">0,5%</span></td>
+                <td><span class="pill good">1,0%</span></td>
+                <td><span class="pill blue">Concluída</span></td>
+              </tr>
+              <tr>
+                <td><div class="campaign-name">Newsletter Fev — Tendências</div><div class="campaign-sub">Broadcast · Conteúdo</div></td>
+                <td>Fev 2025</td><td>9.870</td>
+                <td><span class="pill good">27,3%</span></td>
+                <td><span class="pill good">5,8%</span></td>
+                <td><span class="pill warn">3,9%</span></td>
+                <td><span class="pill good">0,3%</span></td>
+                <td><span class="pill good">1,1%</span></td>
+                <td><span class="pill blue">Concluída</span></td>
+              </tr>
+              <tr>
+                <td><div class="campaign-name">Reativação Leads Frios</div><div class="campaign-sub">Automação · Reativação</div></td>
+                <td>Fev 2025</td><td>5.200</td>
+                <td><span class="pill warn">18,4%</span></td>
+                <td><span class="pill warn">3,2%</span></td>
+                <td><span class="pill warn">2,1%</span></td>
+                <td><span class="pill bad">0,9%</span></td>
+                <td><span class="pill warn">1,8%</span></td>
+                <td><span class="pill blue">Concluída</span></td>
+              </tr>
+              <tr>
+                <td><div class="campaign-name">Lançamento Produto Mar</div><div class="campaign-sub">Broadcast · Produto</div></td>
+                <td>Mar 2025</td><td>15.600</td>
+                <td><span class="pill good">32,7%</span></td>
+                <td><span class="pill good">8,8%</span></td>
+                <td><span class="pill good">6,8%</span></td>
+                <td><span class="pill good">0,4%</span></td>
+                <td><span class="pill good">0,8%</span></td>
+                <td><span class="pill blue">Concluída</span></td>
+              </tr>
+              <tr>
+                <td><div class="campaign-name">Follow-up Proposta Abr</div><div class="campaign-sub">Automação · Comercial</div></td>
+                <td>Abr 2025</td><td>3.900</td>
+                <td><span class="pill good">41,2%</span></td>
+                <td><span class="pill good">10,3%</span></td>
+                <td><span class="pill good">8,1%</span></td>
+                <td><span class="pill good">0,2%</span></td>
+                <td><span class="pill good">0,7%</span></td>
+                <td><span class="pill blue">Concluída</span></td>
+              </tr>
+              <tr>
+                <td><div class="campaign-name">Webinar Maio — Resultados</div><div class="campaign-sub">Broadcast · Evento</div></td>
+                <td>Mai 2025</td><td>7.100</td>
+                <td><span class="pill good">35,6%</span></td>
+                <td><span class="pill good">9,2%</span></td>
+                <td><span class="pill good">7,4%</span></td>
+                <td><span class="pill good">0,2%</span></td>
+                <td><span class="pill good">0,9%</span></td>
+                <td><span class="pill blue">Concluída</span></td>
+              </tr>
+              <tr>
+                <td><div class="campaign-name">Newsletter Jun — Mid-Year</div><div class="campaign-sub">Broadcast · Conteúdo</div></td>
+                <td>Jun 2025</td><td>10.200</td>
+                <td><span class="pill good">29,1%</span></td>
+                <td><span class="pill good">6,7%</span></td>
+                <td><span class="pill warn">4,2%</span></td>
+                <td><span class="pill good">0,3%</span></td>
+                <td><span class="pill good">1,2%</span></td>
+                <td><span class="pill warn">Em andamento</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SEÇÃO 3 — ENGAJAMENTO ══ -->
+    <section class="section" id="engagement">
+      <div class="section-title">
+        <span class="section-badge">03</span>
+        Engajamento da Base
+      </div>
+      <div class="accent-bar"></div>
+
+      <div class="eng-grid">
+        <div class="eng-card fade-in" style="border-top:3px solid #22C55E">
+          <div style="font-size:11px;color:var(--muted);">Leads Engajados</div>
+          <div class="eng-num">28.140</div>
+          <div class="eng-label">58,8% da base total</div>
+          <div class="eng-change up">▲ +2.310 vs mês anterior</div>
+        </div>
+        <div class="eng-card fade-in" style="border-top:3px solid #F59E0B">
+          <div style="font-size:11px;color:var(--muted);">Leads Inativos</div>
+          <div class="eng-num">15.470</div>
+          <div class="eng-label">32,3% da base total</div>
+          <div class="eng-change down">▼ −540 vs mês anterior</div>
+        </div>
+        <div class="eng-card fade-in" style="border-top:3px solid #E8392A">
+          <div style="font-size:11px;color:var(--muted);">Reativados</div>
+          <div class="eng-num">4.222</div>
+          <div class="eng-label">8,8% da base total</div>
+          <div class="eng-change up">▲ +680 vs mês anterior</div>
+        </div>
+        <div class="chart-card fade-in" style="padding:18px;">
+          <div class="chart-title" style="margin-bottom:4px;">Distribuição da Base</div>
+          <div class="chart-sub">Composição por engajamento</div>
+          <div id="chartEngajamento"></div>
+        </div>
+      </div>
+
+      <div class="two-col" style="margin-top:16px;">
+        <div class="chart-card">
+          <div class="chart-title">Crescimento da Base</div>
+          <div class="chart-sub">Evolução de leads — Jan a Jun 2025</div>
+          <div id="chartCrescimento"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Segmentos Mais Responsivos</div>
+          <div class="chart-sub">Taxa de abertura por segmento</div>
+          <div id="chartSegmentos"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SEÇÃO 4 — PIPELINE ══ -->
+    <section class="section" id="pipeline">
+      <div class="section-title">
+        <span class="section-badge">04</span>
+        Pipeline Comercial · Pipedrive
+      </div>
+      <div class="accent-bar"></div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr) 1.6fr;gap:16px;margin-bottom:16px;">
+        <div class="pipe-card fade-in">
+          <div class="pipe-icon-wrap" style="background:rgba(31,58,140,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7EAAFF" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div class="pipe-num">3.841</div>
+          <div class="pipe-label">Enviados ao Comercial</div>
+        </div>
+        <div class="pipe-card fade-in">
+          <div class="pipe-icon-wrap" style="background:rgba(242,140,40,.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F28C28" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <div class="pipe-num">1.920</div>
+          <div class="pipe-label">Qualificados</div>
+        </div>
+        <div class="pipe-card fade-in">
+          <div class="pipe-icon-wrap" style="background:rgba(232,57,42,.12)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8392A" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+          </div>
+          <div class="pipe-num">834</div>
+          <div class="pipe-label">Em Negociação</div>
+        </div>
+        <div class="pipe-card fade-in">
+          <div class="pipe-icon-wrap" style="background:rgba(34,197,94,.12)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="pipe-num">417</div>
+          <div class="pipe-label">Oportunidades Abertas</div>
+        </div>
+
+        <!-- Funil -->
+        <div class="chart-card fade-in" style="display:flex;flex-direction:column;justify-content:center;">
+          <div class="chart-title" style="margin-bottom:16px;">Funil Comercial</div>
+          <div class="funnel-bar">
+            <div class="funnel-label-row"><span>Enviados ao Comercial</span><span>3.841</span></div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:100%;background:linear-gradient(90deg,#1F3A8C,#2A4FA0)"></div></div>
+          </div>
+          <div class="funnel-bar">
+            <div class="funnel-label-row"><span>Qualificados</span><span>1.920 (50%)</span></div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:50%;background:linear-gradient(90deg,#F28C28,#F5A030)"></div></div>
+          </div>
+          <div class="funnel-bar">
+            <div class="funnel-label-row"><span>Em Negociação</span><span>834 (22%)</span></div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:22%;background:linear-gradient(90deg,#E8392A,#F04C1A)"></div></div>
+          </div>
+          <div class="funnel-bar">
+            <div class="funnel-label-row"><span>Oportunidades Abertas</span><span>417 (11%)</span></div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:11%;background:linear-gradient(90deg,#22C55E,#16A34A)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Evolução Semanal do Pipeline</div>
+        <div class="chart-sub">Leads em cada etapa por semana</div>
+        <div id="chartPipeline"></div>
+      </div>
+    </section>
+
+    <!-- ══ SEÇÃO 5 — INSIGHTS ══ -->
+    <section class="section" id="insights">
+      <div class="section-title">
+        <span class="section-badge">05</span>
+        Insights Estratégicos
+      </div>
+      <div class="accent-bar"></div>
+
+      <div class="insights-grid" style="margin-bottom:16px;">
+        <div class="insight-card fade-in">
+          <div class="insight-icon" style="background:rgba(242,140,40,.12)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F28C28" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="insight-title">⏰ Melhor Horário de Envio</div>
+          <div class="insight-value">Ter · 10h</div>
+          <div class="insight-text">Campanhas enviadas às terças-feiras às 10h registraram taxa de abertura média de 34,8% — 6,4 p.p. acima da média geral.</div>
+        </div>
+        <div class="insight-card fade-in">
+          <div class="insight-icon" style="background:rgba(34,197,94,.1)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="insight-title">🏆 Maior Taxa de Abertura</div>
+          <div class="insight-value">41,2%</div>
+          <div class="insight-text">Follow-up Proposta Abr — Assunto personalizado com nome do lead impulsionou engajamento acima de todos os benchmarks.</div>
+        </div>
+        <div class="insight-card fade-in">
+          <div class="insight-icon" style="background:rgba(31,58,140,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7EAAFF" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg>
+          </div>
+          <div class="insight-title">🖱️ Maior Taxa de Cliques</div>
+          <div class="insight-value">10,3%</div>
+          <div class="insight-text">Follow-up Proposta Abr lidera em cliques. CTAs diretos e personalizados resultam em maior intenção de conversão.</div>
+        </div>
+        <div class="insight-card fade-in">
+          <div class="insight-icon" style="background:rgba(232,57,42,.1)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8392A" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div class="insight-title">🎯 Melhor Segmento</div>
+          <div class="insight-value">Decisores</div>
+          <div class="insight-text">Segmento de Diretores e Decisores apresenta abertura 38,9% e conversão 8,4% — melhor performance geral de toda a base.</div>
+        </div>
+        <div class="insight-card fade-in">
+          <div class="insight-icon" style="background:rgba(34,197,94,.1)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+          </div>
+          <div class="insight-title">📈 Tendência de Crescimento</div>
+          <div class="insight-value">+12,4%</div>
+          <div class="insight-text">A base cresceu consistentemente nos últimos 3 meses. Projeção indica 52K leads impactados até o final de julho.</div>
+        </div>
+        <div class="insight-card fade-in" style="background:transparent;padding:0;border:none;">
+          <div style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--white);margin-bottom:12px;">⚡ Alertas Operacionais</div>
+          <div class="alert-card warn">
+            <div class="alert-dot yellow"></div>
+            <div>
+              <div class="alert-text">Taxa de bounce da campanha "Reativação Leads Frios" está em 1,8% — acima do limite recomendado de 1,5%.</div>
+              <div class="alert-label">Ação: revisar lista antes do próximo envio</div>
+            </div>
+          </div>
+          <div class="alert-card ok">
+            <div class="alert-dot green"></div>
+            <div>
+              <div class="alert-text">Entregabilidade global em 98,1% — reputação de domínio excelente. Nenhuma ação corretiva necessária.</div>
+              <div class="alert-label">Monitoramento: estável</div>
+            </div>
+          </div>
+          <div class="alert-card">
+            <div class="alert-dot red"></div>
+            <div>
+              <div class="alert-text">Descadastros do segmento "Inativos &gt;6 meses" acima de 0,9%. Considerar fluxo de sunset policy.</div>
+              <div class="alert-label">Ação: criar segmentação de exclusão automática</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SEÇÃO 6 — STATUS ══ -->
+    <section class="section" id="status">
+      <div class="section-title">
+        <span class="section-badge">06</span>
+        Status da Operação
+      </div>
+      <div class="accent-bar"></div>
+
+      <div class="status-grid">
+        <div class="status-card fade-in">
+          <div class="status-icon" style="background:rgba(34,197,94,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="status-indicator green"></div>
+          <div class="status-label">RD Station</div>
+          <div class="status-sub">Conectado · Estável</div>
+        </div>
+        <div class="status-card fade-in">
+          <div class="status-icon" style="background:rgba(34,197,94,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+          </div>
+          <div class="status-indicator green"></div>
+          <div class="status-label">Pipedrive</div>
+          <div class="status-sub">Integrado · Online</div>
+        </div>
+        <div class="status-card fade-in">
+          <div class="status-icon" style="background:rgba(245,158,11,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div class="status-indicator yellow"></div>
+          <div class="status-label">Base Segmentada</div>
+          <div class="status-sub">3 seg. precisam revisão</div>
+        </div>
+        <div class="status-card fade-in">
+          <div class="status-icon" style="background:rgba(34,197,94,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+          </div>
+          <div class="status-indicator green"></div>
+          <div class="status-label">Última Sincronização</div>
+          <div class="status-sub">Hoje · 09:45</div>
+        </div>
+        <div class="status-card fade-in">
+          <div class="status-icon" style="background:rgba(34,197,94,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="status-indicator green"></div>
+          <div class="status-label">Saúde da Base</div>
+          <div class="status-sub">Ótima · Score 91/100</div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+// ══ DADOS MOCKADOS ══
+const months = ['Jan','Fev','Mar','Abr','Mai','Jun'];
+
+const abertura   = [26.4, 25.8, 29.1, 32.7, 30.4, 28.4];
+const cliques    = [ 5.8,  5.2,  6.4,  7.1,  6.8,  6.2];
+const conversao  = [ 3.9,  3.5,  4.8,  5.6,  5.1,  4.7];
+const crescBase  = [38400, 40200, 42100, 44500, 46200, 47832];
+
+// ══ SPARKLINES ══
+const sparkOpts = (data, color) => ({
+  series: [{ data }],
+  chart: { type:'area', height:40, sparkline:{ enabled:true } },
+  stroke: { curve:'smooth', width:2 },
+  fill: { type:'gradient', gradient:{ shadeIntensity:1, opacityFrom:.5, opacityTo:.0 } },
+  colors: [color],
+  tooltip: { enabled:false }
+});
+
+new ApexCharts(document.querySelector('#spark1'), sparkOpts([38400,40200,42100,44500,46200,47832],'#7EAAFF')).render();
+new ApexCharts(document.querySelector('#spark2'), sparkOpts([26.4,25.8,29.1,32.7,30.4,28.4],'#F28C28')).render();
+new ApexCharts(document.querySelector('#spark3'), sparkOpts([5.8,5.2,6.4,7.1,6.8,6.2],'#22C55E')).render();
+new ApexCharts(document.querySelector('#spark4'), sparkOpts([19.2,20.1,22.0,21.7,22.4,21.8],'#E8392A')).render();
+new ApexCharts(document.querySelector('#spark5'), sparkOpts([3.9,3.5,4.8,5.6,5.1,4.7],'#F28C28')).render();
+new ApexCharts(document.querySelector('#spark6'), sparkOpts([0.42,0.40,0.38,0.35,0.37,0.38],'#F59E0B')).render();
+new ApexCharts(document.querySelector('#spark7'), sparkOpts([1.3,1.4,1.2,1.1,1.2,1.2],'#E8392A')).render();
+new ApexCharts(document.querySelector('#spark8'), sparkOpts([97.4,97.6,98.0,98.3,98.2,98.1],'#22C55E')).render();
+
+// ══ CHART TIMELINE ══
+new ApexCharts(document.querySelector('#chartTimeline'),{
+  series:[
+    {name:'Abertura (%)',data:abertura},
+    {name:'Cliques (%)', data:cliques}
+  ],
+  chart:{ type:'area', height:220, background:'transparent', toolbar:{show:false}, fontFamily:'Poppins,sans-serif' },
+  colors:['#F28C28','#E8392A'],
+  fill:{ type:'gradient', gradient:{ shadeIntensity:1, opacityFrom:.3, opacityTo:.0 } },
+  stroke:{ curve:'smooth', width:2.5 },
+  xaxis:{ categories:months, labels:{ style:{ colors:'#7A8BA8', fontSize:'11px' } } },
+  yaxis:{ labels:{ formatter:v=>v+'%', style:{ colors:'#7A8BA8', fontSize:'10px' } } },
+  grid:{ borderColor:'rgba(255,255,255,0.05)', strokeDashArray:4 },
+  legend:{ labels:{ colors:'#7A8BA8' } },
+  tooltip:{ theme:'dark' }
+}).render();
+
+// ══ CHART CONVERSÃO ══
+new ApexCharts(document.querySelector('#chartConversao'),{
+  series:[{name:'Conversão (%)',data:conversao}],
+  chart:{ type:'bar', height:220, background:'transparent', toolbar:{show:false}, fontFamily:'Poppins,sans-serif' },
+  colors:['#1F3A8C'],
+  fill:{ type:'gradient', gradient:{ type:'vertical', gradientToColors:['#F28C28'], stops:[0,100] } },
+  plotOptions:{ bar:{ borderRadius:6, columnWidth:'55%' } },
+  xaxis:{ categories:months, labels:{ style:{ colors:'#7A8BA8', fontSize:'11px' } } },
+  yaxis:{ labels:{ formatter:v=>v+'%', style:{ colors:'#7A8BA8', fontSize:'10px' } } },
+  grid:{ borderColor:'rgba(255,255,255,0.05)', strokeDashArray:4 },
+  dataLabels:{ enabled:false },
+  tooltip:{ theme:'dark' }
+}).render();
+
+// ══ CHART ENGAJAMENTO (Donut) ══
+new ApexCharts(document.querySelector('#chartEngajamento'),{
+  series:[28140,15470,4222],
+  labels:['Engajados','Inativos','Reativados'],
+  chart:{ type:'donut', height:200, background:'transparent', fontFamily:'Poppins,sans-serif' },
+  colors:['#22C55E','#F59E0B','#E8392A'],
+  legend:{ position:'bottom', labels:{ colors:'#7A8BA8' }, fontSize:'11px' },
+  plotOptions:{ pie:{ donut:{ size:'68%' } } },
+  dataLabels:{ enabled:false },
+  tooltip:{ theme:'dark' }
+}).render();
+
+// ══ CHART CRESCIMENTO ══
+new ApexCharts(document.querySelector('#chartCrescimento'),{
+  series:[{name:'Base Total',data:crescBase}],
+  chart:{ type:'area', height:210, background:'transparent', toolbar:{show:false}, fontFamily:'Poppins,sans-serif' },
+  colors:['#1F3A8C'],
+  fill:{ type:'gradient', gradient:{ gradientToColors:['#F28C28'], stops:[0,100], opacityFrom:.6, opacityTo:.05 } },
+  stroke:{ curve:'smooth', width:2.5 },
+  xaxis:{ categories:months, labels:{ style:{ colors:'#7A8BA8', fontSize:'11px' } } },
+  yaxis:{ labels:{ formatter:v=>(v/1000).toFixed(0)+'K', style:{ colors:'#7A8BA8', fontSize:'10px' } } },
+  grid:{ borderColor:'rgba(255,255,255,0.05)', strokeDashArray:4 },
+  dataLabels:{ enabled:false },
+  tooltip:{ theme:'dark' }
+}).render();
+
+// ══ CHART SEGMENTOS ══
+new ApexCharts(document.querySelector('#chartSegmentos'),{
+  series:[{name:'Abertura (%)',data:[38.9,34.2,29.1,24.8,19.3]}],
+  chart:{ type:'bar', height:210, background:'transparent', toolbar:{show:false}, fontFamily:'Poppins,sans-serif' },
+  colors:['#F28C28'],
+  fill:{ type:'gradient', gradient:{ type:'horizontal', gradientToColors:['#E8392A'] } },
+  plotOptions:{ bar:{ horizontal:true, borderRadius:5, barHeight:'55%' } },
+  xaxis:{ categories:['Decisores','Gerentes','Analistas','Coordenadores','Estagiários'],
+    labels:{ formatter:v=>v+'%', style:{ colors:'#7A8BA8', fontSize:'11px' } } },
+  grid:{ borderColor:'rgba(255,255,255,0.05)', strokeDashArray:4 },
+  dataLabels:{ enabled:false },
+  tooltip:{ theme:'dark' }
+}).render();
+
+// ══ CHART PIPELINE ══
+new ApexCharts(document.querySelector('#chartPipeline'),{
+  series:[
+    {name:'Enviados',     data:[820,790,950,680,750,851]},
+    {name:'Qualificados', data:[390,370,480,340,360,430]},
+    {name:'Negociação',   data:[148,142,195,128,140,181]},
+    {name:'Oportunidades',data:[ 72, 68, 98, 64, 70, 90]}
+  ],
+  chart:{ type:'bar', height:260, background:'transparent', toolbar:{show:false}, fontFamily:'Poppins,sans-serif', stacked:false },
+  colors:['#1F3A8C','#F28C28','#E8392A','#22C55E'],
+  plotOptions:{ bar:{ borderRadius:4, columnWidth:'60%' } },
+  xaxis:{ categories:['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Sem 6'],
+    labels:{ style:{ colors:'#7A8BA8', fontSize:'11px' } } },
+  yaxis:{ labels:{ style:{ colors:'#7A8BA8', fontSize:'10px' } } },
+  grid:{ borderColor:'rgba(255,255,255,0.05)', strokeDashArray:4 },
+  legend:{ labels:{ colors:'#7A8BA8' } },
+  dataLabels:{ enabled:false },
+  tooltip:{ theme:'dark' }
+}).render();
+
+// ══ SEARCH TABLE ══
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const rows = document.querySelectorAll('#campaignTable tr');
+  rows.forEach(r => {
+    r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ══ SORT TABLE ══
+let sortDir = {};
+function sortTable(col) {
+  const tb = document.getElementById('campaignTable');
+  const rows = Array.from(tb.querySelectorAll('tr'));
+  sortDir[col] = !sortDir[col];
+  rows.sort((a,b)=>{
+    const va = a.cells[col]?.innerText.trim()||'';
+    const vb = b.cells[col]?.innerText.trim()||'';
+    const na = parseFloat(va.replace(/[^0-9.]/g,'')); const nb = parseFloat(vb.replace(/[^0-9.]/g,''));
+    if(!isNaN(na)&&!isNaN(nb)) return sortDir[col]?na-nb:nb-na;
+    return sortDir[col]?va.localeCompare(vb):vb.localeCompare(va);
+  });
+  rows.forEach(r=>tb.appendChild(r));
+}
+
+// ══ SIDEBAR NAV ACTIVE ══
+document.querySelectorAll('.nav-item').forEach(a=>{
+  a.addEventListener('click',function(){
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
